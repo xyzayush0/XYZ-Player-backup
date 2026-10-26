@@ -1,0 +1,43 @@
+{
+  "name": "XYZ Player Pro",
+  "short_name": "XYZ Player",
+  "id": "./",
+  "description": "Studio Quality Lossless Music Player & YouTube Streamer with Offline Mode",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "Preview/obsidian.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "Preview/obsidian.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "audio", "entertainment"],
+  "shortcuts": [
+    {
+      "name": "Offline Music",
+      "short_name": "Offline",
+      "description": "Play cached offline music",
+      "url": "./index.html?tab=offline",
+      "icons": [{ "src": "Preview/obsidian.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search YouTube",
+      "short_name": "Search",
+      "description": "Search music on YouTube",
+      "url": "./index.html?tab=search",
+      "icons": [{ "src": "Preview/obsidian.png", "sizes": "192x192" }]
+    }
+  ]
+}

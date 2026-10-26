@@ -1,0 +1,25 @@
+{
+  "name": "xyz-player",
+  "version": "2.5.1",
+  "description": "XYZ Player - Studio Quality Lossless Music Player & YouTube Streamer for Android & Web",
+  "type": "module",
+  "author": "Ayush Dey <ayushdey134@gmail.com> (https://github.com/xyzayush0)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xyzayush0/XYZ-Player.git"
+  },
+  "homepage": "https://github.com/xyzayush0/XYZ-Player#readme",
+  "scripts": {
+    "start": "python3 server.py 8080",
+    "build:www": "node build_www.js",
+    "cap:add": "npx cap add android",
+    "cap:sync": "node build_www.js && npx cap sync android",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@distube/ytdl-core": "^5.0.1"
+  }
+}

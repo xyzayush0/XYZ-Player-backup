@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XYZ Player — Music Player with YouTube Streaming & Synced Lyrics</title>
+  <meta name="description" content="XYZ Player — A modern, glassmorphic web music player. Features YouTube streaming, real-time synced lyrics, dynamic audio visualizer, and custom playlists.">
+  <link rel="icon" type="image/png" href="Preview/obsidian.png">
+  
+  <!-- PWA & Android Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0e14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="Preview/obsidian.png">
+
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Remix Icons for crisp modern vector icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-obsidian">
+  <!-- Dynamic Ambient Glow Backdrop -->
+  <div class="ambient-glow" id="ambientGlow"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- App Wrapper -->
+  <div class="app-container" id="appContainer">
+    
+    <!-- Top Navigation Bar -->
+    <header class="top-nav" id="topNav">
+      <div class="nav-brand">
+        <img src="Preview/obsidian.png" alt="XYZ Player Logo" class="brand-logo" id="brandLogo">
+        <div class="brand-text">
+          <span class="brand-title">XYZ PLAYER</span>
+          <span class="brand-badge">PRO v2.5.1</span>
+        </div>
+      </div>
+
+      <div class="nav-search-container" id="navSearchContainer">
+        <i class="ri-search-line search-icon" id="searchIcon"></i>
+        <input type="text" id="searchInput" placeholder="Search YouTube or library..." autocomplete="off">
+        <div class="search-loader" id="searchLoader" style="display: none;">
+          <i class="ri-loader-4-line spin-icon"></i>
+        </div>
+        <button class="clear-search-btn" id="clearSearchBtn" title="Clear Search"><i class="ri-close-line"></i></button>
+
+        <!-- YouTube Search Results Dropdown -->
+        <div class="yt-search-dropdown" id="ytSearchDropdown" style="display: none;">
+          <div class="yt-search-header">
+            <div class="yt-search-tabs">
+              <button type="button" class="yt-search-tab active" id="ytSearchTabYt" data-tab="yt">
+                <i class="ri-youtube-fill"></i> YouTube <span class="yt-tab-badge" id="ytResultCountBadge">0</span>
+              </button>
+              <button type="button" class="yt-search-tab" id="ytSearchTabLocal" data-tab="local">
+                <i class="ri-folder-music-line"></i> In Library <span class="yt-tab-badge" id="localResultCountBadge">0</span>
+              </button>
+            </div>
+            <div class="yt-search-status" id="ytSearchStatus"></div>
+          </div>
+          <!-- YouTube Music Content Filters -->
+          <div class="yt-filter-bar" id="ytFilterBar">
+            <div class="yt-filter-chips">
+              <button type="button" class="yt-filter-chip active" data-filter="music" id="filterChipMusic" title="Filter out non-music videos (reactions, vlogs, reviews, podcasts)">
+                <i class="ri-music-2-fill"></i> Music Only
+              </button>
+              <button type="button" class="yt-filter-chip" data-filter="official" id="filterChipOfficial" title="Show only Official Music Videos & Studio Audios">
+                <i class="ri-verified-badge-fill"></i> Official
+              </button>
+              <button type="button" class="yt-filter-chip" data-filter="lyrics" id="filterChipLyrics" title="Show Lyric Videos">
+                <i class="ri-text"></i> Lyrics
+              </button>
+              <button type="button" class="yt-filter-chip" data-filter="live" id="filterChipLive" title="Show Live & Concert Performances">
+                <i class="ri-mic-line"></i> Live
+              </button>
+              <button type="button" class="yt-filter-chip" data-filter="all" id="filterChipAll" title="Show all results without music filter">
+                <i class="ri-global-line"></i> All Results
+              </button>
+            </div>
+          </div>
+          <div class="yt-search-results-list" id="ytSearchResultsList">
+            <!-- Dynamic Results -->
+          </div>
+          <div class="yt-search-footer">
+            <span class="yt-search-hint"><i class="ri-keyboard-line"></i> <kbd>Enter</kbd> to play &bull; <kbd>Esc</kbd> to close</span>
+            <button type="button" class="yt-search-footer-btn" id="ytSearchAddAllBtn" style="display: none;" title="Add all search results to queue">
+              <i class="ri-play-list-add-line"></i> Add All to Queue
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- YouTube Stream -->
+        <button class="nav-btn yt-stream-btn" id="openYoutubeBtn" title="Stream audio from YouTube">
+          <i class="ri-youtube-line"></i>
+          <span>YouTube</span>
+        </button>
+
+        <!-- Upload Local Track -->
+        <label class="nav-btn upload-btn" title="Add local audio files (MP3, WAV, FLAC)" for="fileUploadInput" id="uploadBtn">
+          <i class="ri-upload-cloud-2-line"></i>
+          <span>Import Audio</span>
+          <input type="file" id="fileUploadInput" accept="audio/*" multiple style="display: none;">
+        </label>
+
+        <!-- EQ Button -->
+        <button class="nav-btn icon-btn" id="openEqBtn" title="Audio Equalizer & Presets">
+          <i class="ri-equalizer-line"></i>
+        </button>
+
+        <!-- Sleep Timer -->
+        <button class="nav-btn icon-btn" id="openTimerBtn" title="Sleep Timer">
+          <i class="ri-timer-line"></i>
+          <span class="timer-badge" id="timerBadge" style="display: none;">00m</span>
+        </button>
+
+        <!-- Dynamic Live Pill Toggle -->
+        <button class="nav-btn icon-btn" id="toggleLivePillBtn" title="Toggle Floating Live Pill Widget">
+          <i class="ri-notification-badge-line"></i>
+        </button>
+
+        <!-- Shortcuts Help -->
+        <button class="nav-btn icon-btn" id="openShortcutsBtn" title="Keyboard Shortcuts">
+          <i class="ri-keyboard-line"></i>
+        </button>
+
+        <!-- Fullscreen Immersive Mode -->
+        <button class="nav-btn icon-btn" id="fullscreenBtn" title="Immersive Fullscreen Mode">
+          <i class="ri-fullscreen-line" id="fullscreenIcon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Studio Layout -->
+    <main class="main-layout" id="mainLayout">
+
+      <!-- Left Sidebar: Library & Navigation -->
+      <aside class="sidebar-library" id="sidebarLibrary">
+        <!-- Mobile Drawer Header -->
+        <div class="mobile-drawer-header">
+          <div class="mobile-drawer-pill"></div>
+          <div class="mobile-drawer-title-row">
+            <span class="mobile-drawer-title"><i class="ri-folder-music-line"></i> Library & Offline</span>
+            <button type="button" class="mobile-drawer-close-btn" id="closeLibraryDrawerBtn" title="Close"><i class="ri-close-line"></i></button>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading">DISCOVER</h2>
+          <ul class="nav-menu">
+            <li class="nav-item active" data-filter="all" id="navAllTracks">
+              <i class="ri-compass-3-line"></i>
+              <span>All Tracks</span>
+              <span class="item-count" id="countAll">5</span>
+            </li>
+            <li class="nav-item" data-filter="liked" id="navLikedTracks">
+              <i class="ri-heart-3-line"></i>
+              <span>Liked Songs</span>
+              <span class="item-count" id="countLiked">0</span>
+            </li>
+            <li class="nav-item" data-filter="local" id="navLocalTracks">
+              <i class="ri-folder-music-line"></i>
+              <span>Imported Audio</span>
+              <span class="item-count" id="countLocal">0</span>
+            </li>
+            <li class="nav-item" data-filter="youtube" id="navYoutubeTracks">
+              <i class="ri-youtube-line"></i>
+              <span>YouTube Streams</span>
+              <span class="item-count" id="countYoutube">0</span>
+            </li>
+            <li class="nav-item" data-filter="offline" id="navOfflineTracks">
+              <i class="ri-download-cloud-fill" style="color: #00F5A0;"></i>
+              <span>Offline Songs</span>
+              <span class="item-count" id="countOffline">0</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-header-row">
+            <h2 class="sidebar-heading">PLAYLISTS</h2>
+            <button class="icon-subtle-btn" id="createPlaylistBtn" title="Create Playlist"><i class="ri-add-line"></i></button>
+          </div>
+          <ul class="nav-menu" id="playlistMenu">
+            <li class="nav-item" data-playlist="XYZ Master Vault">
+              <i class="ri-disc-line"></i>
+              <span>XYZ Vault</span>
+            </li>
+            <li class="nav-item" data-playlist="Late Night Synthwave">
+              <i class="ri-flashlight-line"></i>
+              <span>Late Night Synth</span>
+            </li>
+            <li class="nav-item" data-playlist="Ambient Chill">
+              <i class="ri-mist-line"></i>
+              <span>Ambient Drift</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Audio Quality Info Card (Dynamic) -->
+        <div class="audio-fidelity-card" id="audioFidelityCard">
+          <div class="fidelity-header">
+            <div class="hi-res-badge" id="fidelityBadge"><i class="ri-sparkling-fill"></i> HI-RES LOSSLESS</div>
+            <span class="fidelity-spec" id="fidelitySpec">24-Bit / 96kHz</span>
+          </div>
+          <p class="fidelity-desc" id="fidelityDesc">Native bit-perfect audio stream with dynamic 32-bit floating point processing.</p>
+          <div class="mini-eq-bars">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Stage: Player & Visualizer OR Synced Lyrics -->
+      <section class="stage-container" id="stageContainer">
+        
+        <!-- YouTube Music Fullscreen Header (Mobile & Stage Switcher) -->
+        <div class="ytm-player-header" id="ytmPlayerHeader">
+          <button type="button" class="ytm-collapse-btn" id="ytmCollapseBtn" title="Collapse player (Back to miniplayer)">
+            <i class="ri-arrow-down-s-line"></i>
+          </button>
+          
+          <div class="ytm-media-switch" id="ytmMediaSwitch">
+            <button type="button" class="ytm-switch-pill active" id="ytmSwitchSong" data-mode="song" title="Switch to Song & Visualizer view">
+              <i class="ri-music-2-fill"></i>
+              <span>Song</span>
+            </button>
+            <button type="button" class="ytm-switch-pill" id="ytmSwitchVideo" data-mode="video" title="Switch to Video view">
+              <i class="ri-movie-2-fill"></i>
+              <span>Video</span>
+            </button>
+          </div>
+
+          <button type="button" class="ytm-more-btn" id="ytmOptionsBtn" title="Audio Equalizer & Presets">
+            <i class="ri-equalizer-line"></i>
+          </button>
+        </div>
+
+        <!-- View Switcher Tabs (Desktop / Synced Lyrics Mode) -->
+        <div class="stage-view-tabs" id="stageViewTabs">
+          <button class="view-tab-btn active" id="tabPlayerView" data-target="player">
+            <i class="ri-music-2-line"></i>
+            <span>Visualizer Stage</span>
+          </button>
+          <button class="view-tab-btn" id="tabLyricsView" data-target="lyrics">
+            <i class="ri-chat-voice-line"></i>
+            <span>Real-Time Synced Lyrics</span>
+            <span class="live-dot-pulse"></span>
+          </button>
+        </div>
+
+        <!-- 1. Player & Visualizer Stage -->
+        <div class="stage-view active-view" id="playerStageView">
+          <div class="visualizer-wrapper">
+            <!-- Canvas Visualizer -->
+            <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
+
+            <!-- Center Artwork Display -->
+            <div class="artwork-container" id="artworkContainer">
+              <div class="artwork-disc" id="artworkDisc">
+                <img src="" alt="Album Artwork" id="mainArtworkImg" class="main-artwork-img">
+                <div class="disc-hole"></div>
+                <div class="vinyl-grooves"></div>
+              </div>
+            </div>
+
+            <!-- YouTube Stage Video Embed (Active in Video mode) -->
+            <div class="yt-stage-video-wrapper" id="ytStageVideoWrapper" style="display: none;">
+              <div class="yt-stage-video-frame" id="ytStageVideoFrame">
+                <div class="yt-stage-placeholder" id="ytStagePlaceholder">
+                  <i class="ri-youtube-line"></i>
+                  <span>No video playing</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visualizer Control Bar -->
+            <div class="visualizer-settings-bar" id="visualizerSettingsBar">
+              <div class="visualizer-modes">
+                <span class="mode-label">Mode:</span>
+                <button class="viz-mode-btn active" data-mode="bars" title="Neon Spectrum Bars">Spectrum</button>
+                <button class="viz-mode-btn" data-mode="circle" title="Circular Pulse Wave">Circular</button>
+                <button class="viz-mode-btn" data-mode="wave" title="Smooth Oscilloscope Wave">Waveform</button>
+                <button class="viz-mode-btn" data-mode="particles" title="Floating Frequency Nebula">Nebula</button>
+              </div>
+              <div class="synth-indicator" id="synthIndicator" title="Web Audio Native Synthesis fallback available">
+                <i class="ri-cpu-line"></i> Studio Engine
+              </div>
+            </div>
+          </div>
+
+          <!-- Track Info Banner -->
+          <div class="track-headline" id="trackHeadline">
+            <div class="headline-meta">
+              <span class="track-genre-tag" id="trackGenreTag">Synthwave</span>
+              <span class="track-bpm-tag" id="trackBpmTag">110 BPM</span>
+            </div>
+            <h1 class="headline-title" id="headlineTitle">Midnight Horizon</h1>
+            <p class="headline-artist" id="headlineArtist">Obsidian Synth • <span id="headlineAlbum">Neon Odyssey</span></p>
+          </div>
+
+          <!-- YouTube Music Action Bar -->
+          <div class="ytm-action-bar" id="ytmActionBar">
+            <button type="button" class="ytm-action-btn" id="ytmLikeBtn" title="Add to Liked Songs">
+              <i class="ri-thumb-up-line" id="ytmLikeIcon"></i>
+              <span>Like</span>
+            </button>
+            <button type="button" class="ytm-action-btn" id="ytmDownloadBtn" title="Save song for Offline Playback">
+              <i class="ri-download-cloud-line" id="ytmDownloadIcon"></i>
+              <span id="ytmDownloadLabel">Download</span>
+            </button>
+            <button type="button" class="ytm-action-btn" id="ytmLyricsBtn" title="View Synced Lyrics">
+              <i class="ri-chat-voice-line"></i>
+              <span>Lyrics</span>
+            </button>
+            <button type="button" class="ytm-action-btn" id="ytmQueueBtn" title="Up Next Queue">
+              <i class="ri-play-list-line"></i>
+              <span>Queue</span>
+            </button>
+          </div>
+
+          <!-- Mobile Fullscreen Controls & Scrubber -->
+          <div class="ytm-mobile-controls-wrap" id="ytmMobileControlsWrap">
+            <div class="ytm-scrubber-row">
+              <span class="time-label" id="ytmCurrentTime">0:00</span>
+              <div class="scrubber-bar" id="ytmScrubberBar">
+                <div class="scrubber-buffered" id="ytmScrubberBuffered"></div>
+                <div class="scrubber-played" id="ytmScrubberPlayed">
+                  <div class="scrubber-handle"></div>
+                </div>
+              </div>
+              <span class="time-label" id="ytmDuration">0:00</span>
+            </div>
+
+            <div class="ytm-buttons-row">
+              <button type="button" class="ctrl-btn" id="ytmShuffleBtn" title="Toggle Shuffle">
+                <i class="ri-shuffle-line" id="ytmShuffleIcon"></i>
+              </button>
+              <button type="button" class="ctrl-btn" id="ytmPrevBtn" title="Previous Track">
+                <i class="ri-skip-back-fill"></i>
+              </button>
+              <button type="button" class="ytm-play-btn" id="ytmPlayBtn" title="Play / Pause">
+                <i class="ri-play-fill" id="ytmPlayIcon"></i>
+              </button>
+              <button type="button" class="ctrl-btn" id="ytmNextBtn" title="Next Track">
+                <i class="ri-skip-forward-fill"></i>
+              </button>
+              <button type="button" class="ctrl-btn" id="ytmRepeatBtn" title="Toggle Repeat">
+                <i class="ri-repeat-line" id="ytmRepeatIcon"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Synced Lyrics Stage -->
+        <div class="stage-view" id="lyricsStageView">
+          <div class="lyrics-header-row">
+            <div class="lyrics-track-title">
+              <i class="ri-music-fill"></i>
+              <span id="lyricsTrackName">Midnight Horizon</span>
+            </div>
+            <div class="lyrics-actions">
+              <button class="lyrics-tool-btn" id="fontSmallerBtn" title="Decrease font size"><i class="ri-font-size-2"></i>-</button>
+              <button class="lyrics-tool-btn" id="fontLargerBtn" title="Increase font size"><i class="ri-font-size-2"></i>+</button>
+              <button class="lyrics-tool-btn" id="toggleAutoScrollBtn" title="Auto-scroll to current line" class="active">
+                <i class="ri-scroll-to-bottom-line"></i> Auto-Scroll: On
+              </button>
+            </div>
+          </div>
+
+          <!-- Synced Lyrics Container -->
+          <div class="lyrics-scroll-container" id="lyricsContainer">
+            <div class="lyrics-interlude-notice" id="lyricsNotice">
+              <span class="interlude-dot"></span>
+              <span class="interlude-dot"></span>
+              <span class="interlude-dot"></span>
+            </div>
+            <!-- Lines dynamically rendered here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Sidebar: Up Next Queue & Playlist -->
+      <aside class="sidebar-queue" id="sidebarQueue">
+        <!-- Mobile Drawer Header -->
+        <div class="mobile-drawer-header">
+          <div class="mobile-drawer-pill"></div>
+          <div class="mobile-drawer-title-row">
+            <span class="mobile-drawer-title"><i class="ri-play-list-line"></i> Up Next Queue</span>
+            <button type="button" class="mobile-drawer-close-btn" id="closeQueueDrawerBtn" title="Close"><i class="ri-close-line"></i></button>
+          </div>
+        </div>
+
+        <div class="queue-header">
+          <div class="queue-title-row">
+            <h2 class="sidebar-heading">UP NEXT</h2>
+            <span class="queue-count" id="queueCount">5 tracks</span>
+          </div>
+          <div class="queue-action-row">
+            <button class="queue-action-btn" id="shuffleQueueBtn" title="Shuffle queue"><i class="ri-shuffle-line"></i> Shuffle</button>
+            <button class="queue-action-btn" id="clearQueueBtn" title="Reset queue"><i class="ri-refresh-line"></i> Reset</button>
+          </div>
+        </div>
+
+        <div class="queue-list" id="queueList">
+          <!-- Dynamic queue items generated here -->
+        </div>
+
+        <!-- Drag & Drop Zone for Audio Files -->
+        <div class="drop-zone" id="dropZone">
+          <i class="ri-drag-drop-line"></i>
+          <span>Drop audio files to add</span>
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- Bottom Floating Dock Player -->
+    <footer class="player-dock" id="playerDock">
+      
+      <!-- Mobile Top Edge Micro Progress Bar -->
+      <div class="mobile-miniplayer-progress" id="mobileMiniplayerProgress">
+        <div class="mobile-miniplayer-bar" id="mobileMiniplayerBar"></div>
+      </div>
+
+      <!-- Current Track Preview (Left) -->
+      <div class="dock-track-info" id="dockTrackInfo">
+        <div class="dock-thumb-wrapper" id="dockThumbWrapper">
+          <img src="" alt="Thumbnail" id="dockThumbImg" class="dock-thumb-img">
+          <div class="dock-thumb-overlay" id="dockThumbOverlay">
+            <i class="ri-music-2-line"></i>
+          </div>
+        </div>
+        <div class="dock-meta">
+          <div class="dock-title-marquee">
+            <span class="dock-title" id="dockTitle">Midnight Horizon</span>
+          </div>
+          <span class="dock-artist" id="dockArtist">Obsidian Synth</span>
+        </div>
+        <button class="heart-btn" id="likeTrackBtn" title="Add to Liked Songs">
+          <i class="ri-heart-line" id="heartIcon"></i>
+        </button>
+      </div>
+
+      <!-- Playback Controls & Scrubber (Center) -->
+      <div class="dock-center-controls">
+        <div class="dock-button-row">
+          <button class="ctrl-btn" id="shuffleBtn" title="Toggle Shuffle (S)">
+            <i class="ri-shuffle-line"></i>
+          </button>
+          <button class="ctrl-btn" id="prevBtn" title="Previous Track (Left Arrow)">
+            <i class="ri-skip-back-fill"></i>
+          </button>
+          <button class="play-main-btn" id="playBtn" title="Play / Pause (Space)">
+            <i class="ri-play-fill" id="playIcon"></i>
+          </button>
+          <button class="ctrl-btn" id="nextBtn" title="Next Track (Right Arrow)">
+            <i class="ri-skip-forward-fill"></i>
+          </button>
+          <button class="ctrl-btn" id="repeatBtn" title="Repeat Mode: Off (R)">
+            <i class="ri-repeat-line" id="repeatIcon"></i>
+          </button>
+        </div>
+
+        <!-- Scrubber Progress Bar -->
+        <div class="dock-progress-container">
+          <span class="time-label" id="currentTimeLabel">0:00</span>
+          <div class="scrubber-bar" id="scrubberBar">
+            <div class="scrubber-buffered" id="scrubberBuffered"></div>
+            <div class="scrubber-played" id="scrubberPlayed">
+              <div class="scrubber-handle"></div>
+            </div>
+            <div class="scrubber-tooltip" id="scrubberTooltip">0:00</div>
+          </div>
+          <span class="time-label" id="durationLabel">3:04</span>
+        </div>
+      </div>
+
+      <!-- Dock Right Actions -->
+      <div class="dock-right-actions">
+        <!-- Lyrics Shortcut -->
+        <button class="dock-tool-btn" id="dockLyricsBtn" title="Toggle Synced Lyrics">
+          <i class="ri-chat-voice-line"></i>
+        </button>
+
+        <!-- Toggle Floating YouTube Video Player -->
+        <button class="dock-tool-btn" id="dockYtToggleBtn" title="Toggle Floating Video Player" style="display: none;">
+          <i class="ri-tv-line" id="dockYtToggleIcon"></i>
+        </button>
+
+        <!-- Save Song for Offline Playback -->
+        <button class="dock-tool-btn" id="dockDownloadBtn" title="Save Song for Offline Playback">
+          <i class="ri-download-cloud-line" id="dockDownloadIcon"></i>
+        </button>
+
+        <!-- Speed Selector -->
+        <div class="speed-menu-container">
+          <button class="dock-tool-btn speed-btn" id="speedBtn" title="Playback Speed">1.0x</button>
+          <div class="speed-dropdown" id="speedDropdown">
+            <button data-speed="0.75">0.75x</button>
+            <button data-speed="1.0" class="active">1.0x Normal</button>
+            <button data-speed="1.25">1.25x</button>
+            <button data-speed="1.5">1.5x</button>
+            <button data-speed="2.0">2.0x</button>
+          </div>
+        </div>
+
+        <!-- Volume Controls -->
+        <div class="volume-container">
+          <button class="dock-tool-btn" id="muteBtn" title="Mute / Unmute (M)">
+            <i class="ri-volume-up-line" id="volumeIcon"></i>
+          </button>
+          <div class="volume-slider-bar" id="volumeSliderBar">
+            <div class="volume-level" id="volumeLevel">
+              <div class="volume-handle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </footer>
+
+    <!-- Mobile Drawer Backdrop for Slide-up Sheets -->
+    <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop"></div>
+
+    <!-- Mobile Bottom Navigation Bar (YouTube Music Style Dock) -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+      <button type="button" class="mobile-nav-btn active" data-tab="player" id="mobileNavPlayer">
+        <div class="mobile-nav-icon-wrap">
+          <i class="ri-home-5-line"></i>
+        </div>
+        <span>Home</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-tab="search" id="mobileNavSearch">
+        <div class="mobile-nav-icon-wrap">
+          <i class="ri-search-2-line"></i>
+        </div>
+        <span>Search</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-tab="library" id="mobileNavLibrary">
+        <div class="mobile-nav-icon-wrap">
+          <i class="ri-folder-music-line"></i>
+          <span class="mobile-nav-dot" id="mobileOfflineDot" style="display: none;" title="Offline songs available"></span>
+        </div>
+        <span>Library</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-tab="queue" id="mobileNavQueue">
+        <div class="mobile-nav-icon-wrap">
+          <i class="ri-play-list-line"></i>
+          <span class="mobile-nav-badge" id="mobileQueueNavBadge">0</span>
+        </div>
+        <span>Queue</span>
+      </button>
+    </nav>
+
+    <!-- Shown only when the browser makes the PWA install prompt available. -->
+    <aside class="pwa-install-banner" id="pwaInstallBanner" style="display: none;" role="status" aria-live="polite">
+      <div class="pwa-install-info">
+        <img src="Preview/obsidian.png" alt="" class="pwa-install-icon">
+        <div>
+          <strong>Install XYZ Player</strong>
+          <p>Keep your music player on your home screen.</p>
+        </div>
+      </div>
+      <div class="pwa-install-actions">
+        <button type="button" class="pwa-btn-install" id="pwaInstallBtn"><i class="ri-download-2-line"></i> Install</button>
+        <button type="button" class="pwa-btn-dismiss" id="pwaDismissBtn" aria-label="Dismiss install prompt"><i class="ri-close-line"></i></button>
+      </div>
+    </aside>
+
+    <!-- Obsidian Dynamic Live Pill (Signature Android 13+ Floating Widget) -->
+    <div class="obsidian-live-pill" id="obsidianLivePill">
+      <div class="pill-disc-spin" id="pillDiscSpin">
+        <img src="" id="pillArtworkImg" alt="Pill Disc">
+      </div>
+      <div class="pill-track-info">
+        <span class="pill-title" id="pillTitle">Midnight Horizon</span>
+        <span class="pill-artist" id="pillArtist">Obsidian Synth</span>
+      </div>
+      <div class="pill-controls">
+        <button class="pill-btn" id="pillPrevBtn" title="Previous"><i class="ri-skip-back-mini-fill"></i></button>
+        <button class="pill-btn pill-play" id="pillPlayBtn" title="Play/Pause"><i class="ri-play-mini-fill" id="pillPlayIcon"></i></button>
+        <button class="pill-btn" id="pillNextBtn" title="Next"><i class="ri-skip-forward-mini-fill"></i></button>
+        <button class="pill-btn pill-close" id="pillCloseBtn" title="Minimize pill"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Equalizer Modal -->
+    <div class="modal-backdrop" id="eqModalBackdrop">
+      <div class="modal-card eq-modal" id="eqModal">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ri-equalizer-line"></i>
+            <span>XYZ Studio Equalizer</span>
+          </div>
+          <button class="close-modal-btn" id="closeEqBtn"><i class="ri-close-line"></i></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="eq-presets-row">
+            <span class="preset-label">Preset:</span>
+            <button class="preset-btn active" data-preset="flat">Flat</button>
+            <button class="preset-btn" data-preset="bass">Bass Boost</button>
+            <button class="preset-btn" data-preset="electronic">Electronic</button>
+            <button class="preset-btn" data-preset="vocal">Vocal Clarity</button>
+            <button class="preset-btn" data-preset="treble">Treble Boost</button>
+          </div>
+
+          <!-- 5-Band Equalizer Sliders -->
+          <div class="eq-bands-wrapper">
+            <div class="eq-band">
+              <span class="db-val" id="dbVal60">0 dB</span>
+              <input type="range" min="-12" max="12" value="0" step="1" orient="vertical" class="eq-slider" id="eq60" data-band="60">
+              <span class="band-freq">60 Hz</span>
+              <span class="band-sub">Sub Bass</span>
+            </div>
+            <div class="eq-band">
+              <span class="db-val" id="dbVal250">0 dB</span>
+              <input type="range" min="-12" max="12" value="0" step="1" orient="vertical" class="eq-slider" id="eq250" data-band="250">
+              <span class="band-freq">250 Hz</span>
+              <span class="band-sub">Bass</span>
+            </div>
+            <div class="eq-band">
+              <span class="db-val" id="dbVal1k">0 dB</span>
+              <input type="range" min="-12" max="12" value="0" step="1" orient="vertical" class="eq-slider" id="eq1k" data-band="1000">
+              <span class="band-freq">1 kHz</span>
+              <span class="band-sub">Mids</span>
+            </div>
+            <div class="eq-band">
+              <span class="db-val" id="dbVal4k">0 dB</span>
+              <input type="range" min="-12" max="12" value="0" step="1" orient="vertical" class="eq-slider" id="eq4k" data-band="4000">
+              <span class="band-freq">4 kHz</span>
+              <span class="band-sub">High Mids</span>
+            </div>
+            <div class="eq-band">
+              <span class="db-val" id="dbVal16k">0 dB</span>
+              <input type="range" min="-12" max="12" value="0" step="1" orient="vertical" class="eq-slider" id="eq16k" data-band="16000">
+              <span class="band-freq">16 kHz</span>
+              <span class="band-sub">Air</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" id="resetEqBtn">Reset to Flat</button>
+          <button class="btn-primary" id="saveEqBtn">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sleep Timer Modal -->
+    <div class="modal-backdrop" id="timerModalBackdrop">
+      <div class="modal-card timer-modal" id="timerModal">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ri-timer-line"></i>
+            <span>Sleep Timer</span>
+          </div>
+          <button class="close-modal-btn" id="closeTimerBtn"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="timer-desc">Playback will gently fade out when the timer expires.</p>
+          <div class="timer-options-grid">
+            <button class="timer-opt-btn" data-minutes="15">15 Minutes</button>
+            <button class="timer-opt-btn" data-minutes="30">30 Minutes</button>
+            <button class="timer-opt-btn" data-minutes="45">45 Minutes</button>
+            <button class="timer-opt-btn" data-minutes="60">60 Minutes</button>
+          </div>
+          <div class="timer-status-row" id="timerStatusRow" style="display: none;">
+            <span>Active Countdown:</span>
+            <strong id="timerCountdown">30:00</strong>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancelTimerBtn">Turn Off</button>
+          <button class="btn-primary" id="closeTimerModalBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-backdrop" id="shortcutsModalBackdrop">
+      <div class="modal-card shortcuts-modal" id="shortcutsModal">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ri-keyboard-line"></i>
+            <span>Keyboard Shortcuts</span>
+          </div>
+          <button class="close-modal-btn" id="closeShortcutsBtn"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="shortcuts-grid">
+            <div class="shortcut-item"><kbd>Space</kbd> <span>Play / Pause</span></div>
+            <div class="shortcut-item"><kbd>→</kbd> <span>Forward 5 seconds</span></div>
+            <div class="shortcut-item"><kbd>←</kbd> <span>Rewind 5 seconds</span></div>
+            <div class="shortcut-item"><kbd>N</kbd> <span>Next Track</span></div>
+            <div class="shortcut-item"><kbd>P</kbd> <span>Previous Track</span></div>
+            <div class="shortcut-item"><kbd>L</kbd> <span>Toggle Liked Track</span></div>
+            <div class="shortcut-item"><kbd>M</kbd> <span>Mute / Unmute</span></div>
+            <div class="shortcut-item"><kbd>S</kbd> <span>Toggle Shuffle</span></div>
+            <div class="shortcut-item"><kbd>R</kbd> <span>Toggle Repeat</span></div>
+            <div class="shortcut-item"><kbd>F</kbd> <span>Immersive Fullscreen</span></div>
+            <div class="shortcut-item"><kbd>Y</kbd> <span>YouTube Stream</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YouTube Stream Modal -->
+    <div class="modal-backdrop" id="youtubeModalBackdrop">
+      <div class="modal-card youtube-modal" id="youtubeModal">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ri-youtube-line" style="color: #FF0033;"></i>
+            <span>Stream from YouTube</span>
+          </div>
+          <button class="close-modal-btn" id="closeYoutubeBtn"><i class="ri-close-line"></i></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="yt-modal-desc">Paste a YouTube video URL to stream its audio directly in XYZ Player. No downloading — streams legally via YouTube.</p>
+
+          <div class="yt-input-row">
+            <div class="yt-input-wrapper">
+              <i class="ri-link"></i>
+              <input type="text" id="youtubeUrlInput" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" spellcheck="false">
+            </div>
+            <button class="btn-primary yt-add-btn" id="youtubeAddBtn">
+              <i class="ri-play-circle-line"></i>
+              Stream
+            </button>
+          </div>
+
+          <div class="yt-error-msg" id="ytErrorMsg" style="display: none;">
+            <i class="ri-error-warning-line"></i>
+            <span id="ytErrorText">Invalid YouTube URL</span>
+          </div>
+
+          <!-- YouTube Stream Status in Modal -->
+          <div class="yt-player-container" id="ytPlayerContainer" style="display: none;">
+            <div class="yt-now-streaming">
+              <span class="yt-streaming-dot"></span>
+              <span id="ytModalStreamingText">Now Streaming via YouTube</span>
+            </div>
+          </div>
+
+          <!-- Recent YouTube Streams -->
+          <div class="yt-recent-section" id="ytRecentSection">
+            <h3 class="yt-recent-heading">
+              <i class="ri-history-line"></i>
+              Recent Streams
+            </h3>
+            <div class="yt-recent-list" id="ytRecentList">
+              <div class="yt-recent-empty">
+                <i class="ri-youtube-line"></i>
+                <span>No recent streams yet</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" id="ytClearHistoryBtn">Clear History</button>
+          <button class="btn-primary" id="closeYoutubeModalBtn">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persistent Floating YouTube Player Mini-Host (Always in DOM) -->
+    <div class="yt-stream-host" id="ytStreamHost" style="display: none;">
+      <!-- Expanded Top Header -->
+      <div class="yt-stream-header" id="ytStreamHeader">
+        <div class="yt-stream-badge">
+          <i class="ri-drag-move-2-line yt-drag-handle" id="ytDragHandle" title="Drag to move (Double-click to reset position)"></i>
+          <i class="ri-youtube-fill" style="color: #FF0033;"></i>
+          <span id="ytStreamHostTitle">YouTube Stream</span>
+        </div>
+        <div class="yt-stream-btns">
+          <button type="button" class="yt-stream-toggle-btn download-action" id="ytDownloadBtn" title="Save song for Offline Playback">
+            <i class="ri-download-cloud-line" id="ytDownloadIcon"></i>
+          </button>
+          <button type="button" class="yt-stream-toggle-btn audio-only-action" id="ytAudioOnlyBtn" title="Hide Video (Pure Audio Mode - keeps music playing)">
+            <i class="ri-eye-off-line"></i>
+          </button>
+          <button type="button" class="yt-stream-toggle-btn minimize-action" id="ytMinimizeBtn" title="Minimize to Floating Pill">
+            <i class="ri-subtract-line"></i>
+          </button>
+          <button type="button" class="yt-stream-toggle-btn expand-size-action" id="ytExpandSizeBtn" title="Toggle Size (Standard / Theater)">
+            <i class="ri-aspect-ratio-line" id="ytExpandSizeIcon"></i>
+          </button>
+          <button type="button" class="yt-stream-toggle-btn close-action" id="ytCloseStreamBtn" title="Stop YouTube Stream">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Minimized Audio Pill Bar (Shown when minimized) -->
+      <div class="yt-stream-min-bar" id="ytStreamMinBar">
+        <i class="ri-drag-move-2-line yt-min-drag-handle" id="ytMinDragHandle" title="Drag to move miniplayer (Double-click to reset position)"></i>
+        <div class="yt-min-info" id="ytMinInfoTrigger" title="Click to expand video player">
+          <span class="yt-min-live-dot"></span>
+          <i class="ri-youtube-fill" style="color: #FF0033;"></i>
+          <span class="yt-min-title" id="ytMinTitle">YouTube Stream</span>
+        </div>
+        <div class="yt-min-btns">
+          <button type="button" class="yt-min-btn download-action" id="ytMinDownloadBtn" title="Save song for Offline Playback">
+            <i class="ri-download-cloud-line" id="ytMinDownloadIcon"></i>
+          </button>
+          <button type="button" class="yt-min-btn play-action" id="ytMinPlayBtn" title="Play / Pause">
+            <i class="ri-pause-mini-fill" id="ytMinPlayIcon"></i>
+          </button>
+          <button type="button" class="yt-min-btn expand-action" id="ytMinExpandBtn" title="Expand Video Player">
+            <i class="ri-arrow-up-s-line"></i>
+          </button>
+          <button type="button" class="yt-min-btn audio-only-action" id="ytMinAudioOnlyBtn" title="Hide Miniplayer (Pure Audio Mode - keeps music playing)">
+            <i class="ri-eye-off-line"></i>
+          </button>
+          <button type="button" class="yt-min-btn close-action" id="ytMinCloseBtn" title="Stop Stream">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Video Container (iframe remains alive and playing when minimized) -->
+      <div class="yt-stream-embed" id="ytPlayerWrapper">
+        <div id="youtubePlayer"></div>
+      </div>
+    </div>
+
+    <!-- Toast Notification System -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Hidden Native Audio Tag -->
+    <audio id="nativeAudio" preload="auto"></audio>
+
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

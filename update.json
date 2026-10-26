@@ -1,0 +1,6 @@
+{
+  "versionCode": 9,
+  "versionName": "2.5.1",
+  "downloadUrl": "https://github.com/xyzayush0/XYZ-Player/releases/download/v2.5.1/XYZPlayer.apk",
+  "releaseNotes": "💎 Lossless Audio: Studio master 24-bit and 16-bit CD-quality uncompressed audio engine.\n🖼️ High-Res Artwork: Crisp high-definition cover art decoding with animated visualizers.\n🎤 Synced Lyrics: Real-time, word-by-word animated lyrics synchronized with playback.\n⚡ Enhanced Performance & Stability: Offline IndexedDB storage, native Android Capacitor support, and smooth background audio."
+}
